@@ -55,7 +55,7 @@ void display_set_ptr(enum display_mode mode)
 void display_init(void)
 {
 	GPIO_DeInit(GPIOB);
-	GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUT_PP_LOW_SLOW);        // LED
+	GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUT_PP_HIGH_SLOW);        // LED
 	// segment pins
 	for (uint8_t i = 0; i < NSEGMENTS; i++) {
 		GPIO_Init(segments[i].port, segments[i].pin, GPIO_MODE_OUT_PP_LOW_SLOW);
