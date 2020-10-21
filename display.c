@@ -14,12 +14,12 @@ static uint8_t hours_buffer[3];
 static uint8_t mins_buffer[3];
 static uint8_t *display_ptr;
 static uint8_t digit_number;
-static uint8_t font[] = { 0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
+const static uint8_t font[] = { 0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
 
 // ports and pins are discontinous due to limited pins of TSSOP20 package
 
 // segments are listed from LSb = A, to MSb = DP
-static port_pin segments[] = {
+const static port_pin segments[] = {
 	{ GPIOD, GPIO_PIN_5 },
 	{ GPIOD, GPIO_PIN_6 },
 	{ GPIOC, GPIO_PIN_3 },
@@ -34,7 +34,7 @@ static port_pin segments[] = {
 
 // digits are listed from left to right as strings are too
 // D1 is not used unless necessary as it's the SWIM pin
-static port_pin digits[] = {
+const static port_pin digits[] = {
 	{ GPIOD, GPIO_PIN_4 },
 	{ GPIOD, GPIO_PIN_3 },
 	{ GPIOD, GPIO_PIN_2 },
