@@ -42,7 +42,7 @@ static void switchaction()
 static void set_normal_mode(void)
 {
 	// 3 seconds displaying minutes, then 2 seconds displaying hours
-	display_set_ptr((tod_time.seconds % 5 <= 3) ? D_MINS : D_HOURS);
+	display_set_ptr((tod_time.seconds % 5 < 3) ? D_MINS : D_HOURS);
 }
 
 static inline void reinitstate()
