@@ -5,10 +5,24 @@
 
 #include "tod.h"
 
+#define	DDS_BITS	24ul
+#define	DDS_CARRY	(1ul << DDS_BITS)
+#define	DDS_MASK	(DDS_CARRY - 1ul)
+#define	DDS_INCR	((DDS_CARRY * HERTZ)/TIM1_RATE)
+// Edit this define for your particular MCU, -ve to slow, +ve to speed
+#define	DDS_ADJ		-500ul
+
+static uint32_t DDS_PhaseIncr;
+static volatile uint32_t DDS_Accum;
+
 struct tod_time tod_time;
 
 static void tod_increment(void)
 {
+	DDS_Accum += DDS_PhaseIncr;
+	if (!(DDS_Accum & DDS_CARRY))
+		return;
+	DDS_Accum &= DDS_MASK;
 	tod_time.subseconds++;
 	tod_time.changed |= T_SUBSECOND;
 	if (tod_time.subseconds < HERTZ)
@@ -39,13 +53,14 @@ void tim1_isr(void) __interrupt(ITC_IRQ_TIM1_OVF)
 
 void tod_init(void)
 {
+	DDS_PhaseIncr = DDS_INCR + DDS_ADJ;
 	tod_time.hours = 12;
 	tod_time.minutes = 34;
 	tod_time.seconds = 56;
 	tod_time.subseconds = 0;
 	tod_time.changed = T_NONE;
 	TIM1_DeInit();
-	// freq = (clock CPU/50000)/5 -> 64Hz
+	// (clock CPU/50000)/5 -> 64 (TIM1_RATE)
 	TIM1_TimeBaseInit(50000, TIM1_COUNTERMODE_DOWN, 4, 0);
 	TIM1_ITConfig(TIM1_IT_UPDATE, ENABLE);
 	TIM1_Cmd(ENABLE);
