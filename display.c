@@ -97,7 +97,7 @@ void display_update_dot(void)
 
 static void display_segments(uint8_t value)
 {
-	port_pin	*pp = &segments[NSEGMENTS-1];
+	const port_pin	*pp = &segments[NSEGMENTS-1];
 
 	// set pins from MSb down to LSb
 	for (uint8_t mask = 0x80; mask != 0; mask >>= 1, pp--) {
