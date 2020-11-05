@@ -1,6 +1,6 @@
 # Irreproducible STM8 clock
 
-These is the firmware for my Hackaday project [Irreproducible Clock](https://hackaday.io/project/175456-irreproducible-clock).
+This is the firmware for my Hackaday project [Irreproducible Clock](https://hackaday.io/project/175456-irreproducible-clock).
 
 ## Versioning
 
