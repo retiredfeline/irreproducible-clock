@@ -9,8 +9,11 @@
 #define	DDS_CARRY	(1ul << DDS_BITS)
 #define	DDS_MASK	(DDS_CARRY - 1ul)
 #define	DDS_INCR	((DDS_CARRY * HERTZ)/TIM1_RATE)
-// Edit this define for your particular MCU, -ve to slow, +ve to speed
+
+// Can be adjusted in Makefile, -ve to slow, +ve to speed
+#ifndef	DDS_ADJ
 #define	DDS_ADJ		0ul
+#endif	// DDS_ADJ
 
 static uint32_t DDS_PhaseIncr;
 static volatile uint32_t DDS_Accum;
