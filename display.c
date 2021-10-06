@@ -15,6 +15,7 @@ static uint8_t mins_buffer[3];
 static uint8_t *display_ptr;
 static uint8_t digit_number;
 const static uint8_t font[] = { 0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };
+static uint8_t visible;
 
 // ports and pins are discontinous due to limited pins of TSSOP20 package
 
@@ -105,6 +106,11 @@ static void display_segments(uint8_t value)
 	}
 }
 
+void display_set_visibility(uint8_t state)
+{
+	visible = state;
+}
+
 void display_next_digit(void)
 {
 	// turn off digit line
@@ -116,7 +122,8 @@ void display_next_digit(void)
 	// set segments
 	display_segments(display_ptr[digit_number]);
 	// turn on digit line
-	GPIO_WriteHigh(digits[digit_number].port, digits[digit_number].pin);
+	if (visible)
+		GPIO_WriteHigh(digits[digit_number].port, digits[digit_number].pin);
 }
 
 uint8_t display_digit_number(void)

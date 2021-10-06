@@ -15,26 +15,40 @@
 
 static uint8_t swstate, swtent, swmin, swrepeat, normal_display;
 static struct pt pt;
+static uint16_t setactive;			// ticks, > 0 in setting mode
+
+#define	SETTIMEOUT	(8*500)			// 8 seconds to set
+#define	SETMARGIN	(500/2)			// 0.5 seconds to blank
 
 static void switchaction()
 {
 	switch (swstate & B_BOTH) {
 	case B_MINS:
+		if (setactive <= 0)
+			break;
 		normal_display = 0;		// suspend while setting
 		display_set_ptr(D_MINS);
 		tod_time.seconds = 0;
 		tod_time.minutes++;
 		if (tod_time.minutes >= 60)
 			tod_time.minutes = 0;
+		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
 		break;
 	case B_HOURS:
+		if (setactive <= 0)
+			break;
 		normal_display = 0;		// suspend while setting
 		display_set_ptr(D_HOURS);
 		tod_time.hours++;
 		if (tod_time.hours >= 24)
 			tod_time.hours = 0;
+		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
+		break;
+	case B_BOTH:
+		setactive = SETTIMEOUT;
+		display_set_visibility(0);
 		break;
 	}
 }
@@ -94,9 +108,15 @@ int main(void)
 	button_init();
 	mcu_enable_interrupts();
 
+	setactive = 0;					// not in set mode
 	uint8_t counter = 0;
 	display_update();
 	for (;;) {
+		if (setactive > 0)			// decrease set timeout
+			setactive--;
+		display_set_visibility(setactive == 0 ||
+			(setactive >= SETMARGIN &&
+			setactive < SETTIMEOUT - SETMARGIN));
 		if (tod_time.changed & (T_HOURS | T_MINUTES))
 			display_update();
 		if (tod_time.changed & T_SECONDS && normal_display)
