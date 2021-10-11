@@ -2,6 +2,8 @@
 
 #include <stm8s_gpio.h>
 
+#include "clock.h"
+
 #include "display.h"
 #include "tod.h"
 
@@ -87,8 +89,8 @@ static void digits_update(uint8_t *buffer, uint8_t value)
 
 void display_update(void)
 {
-	digits_update(hours_buffer, tod_time.hours);
-	digits_update(mins_buffer, tod_time.minutes);
+	digits_update(hours_buffer, TIME.hours);
+	digits_update(mins_buffer, TIME.minutes);
 }
 
 void display_update_dot(void)

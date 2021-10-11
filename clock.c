@@ -1,17 +1,12 @@
 #define STM8S103
 
+#include "clock.h"
+
 #include "mcu.h"
 #include "tick.h"
 #include "tod.h"
 #include "display.h"
 #include "button.h"
-
-#ifdef	DS3231
-#include "rtc.h"
-#define	TIME	rtc_time
-#else
-#define	TIME	tod_time
-#endif
 
 #include "pt.h"
 
