@@ -4,7 +4,6 @@
 
 #include "mcu.h"
 #include "tick.h"
-#include "tod.h"
 #include "display.h"
 #include "button.h"
 
@@ -104,7 +103,11 @@ int main(void)
 {
 	mcu_init();
 	tick_init();
+#ifdef	DS3231
+	rtc_init();
+#else
 	tod_init();
+#endif
 	display_init();
 	reinitstate();
 	button_init();
@@ -126,8 +129,11 @@ int main(void)
 		TIME.changed = T_NONE;
 		display_next_digit();
 		counter++;
-		if (counter >= 250) {
+		if (counter >= 100) {
 			counter = 0;
+#ifdef	DS3231
+			rtc_getnow();
+#endif
 		}
 		while (!tick_check())
 			;

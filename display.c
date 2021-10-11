@@ -5,7 +5,6 @@
 #include "clock.h"
 
 #include "display.h"
-#include "tod.h"
 
 #define	DIGITS		3
 #define HSEGMENTS	0x54	// G.E.C..

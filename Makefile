@@ -5,13 +5,15 @@ INCLUDES=-Iinclude -Ipt-1.4
 LIBS=spl.lib
 DDS_ADJ=0ul
 
-# Add DS3231=y to make invocation to compile with rtc module
+# Add DS3231=y to make invocation to build with rtc module instead of tod module
 ifdef DS3231
 CFLAGS+=-DDS3231
-RTC_OBJ=rtc.rel
+TIMEBASE_OBJ=rtc.rel
+else
+TIMEBASE_OBJ=tod.rel
 endif
 
-iclock.ihx:	clock.rel mcu.rel tick.rel tod.rel display.rel button.rel $(RTC_OBJ)
+iclock.ihx:	clock.rel mcu.rel tick.rel display.rel button.rel $(TIMEBASE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 # Remake tod.rel if DDS_ADJ changed in Makefile
