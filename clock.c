@@ -6,6 +6,13 @@
 #include "display.h"
 #include "button.h"
 
+#ifdef	DS3231
+#include "rtc.h"
+#define	TIME	rtc_time
+#else
+#define	TIME	tod_time
+#endif
+
 #include "pt.h"
 
 #define MSPERTICK	2u
@@ -28,10 +35,10 @@ static void switchaction()
 			break;
 		normal_display = 0;		// suspend while setting
 		display_set_ptr(D_MINS);
-		tod_time.seconds = 0;
-		tod_time.minutes++;
-		if (tod_time.minutes >= 60)
-			tod_time.minutes = 0;
+		TIME.seconds = 0;
+		TIME.minutes++;
+		if (TIME.minutes >= 60)
+			TIME.minutes = 0;
 		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
 		break;
@@ -40,9 +47,9 @@ static void switchaction()
 			break;
 		normal_display = 0;		// suspend while setting
 		display_set_ptr(D_HOURS);
-		tod_time.hours++;
-		if (tod_time.hours >= 24)
-			tod_time.hours = 0;
+		TIME.hours++;
+		if (TIME.hours >= 24)
+			TIME.hours = 0;
 		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
 		break;
@@ -56,7 +63,7 @@ static void switchaction()
 static void set_normal_mode(void)
 {
 	// 3 seconds displaying minutes, then 2 seconds displaying hours
-	display_set_ptr((tod_time.seconds % 5 < 3) ? D_MINS : D_HOURS);
+	display_set_ptr((TIME.seconds % 5 < 3) ? D_MINS : D_HOURS);
 }
 
 static inline void reinitstate()
@@ -117,16 +124,14 @@ int main(void)
 		display_set_visibility(setactive == 0 ||
 			(setactive >= SETMARGIN &&
 			setactive < SETTIMEOUT - SETMARGIN));
-		if (tod_time.changed & (T_HOURS | T_MINUTES))
+		if (TIME.changed & (T_HOURS | T_MINUTES))
 			display_update();
-		if (tod_time.changed & T_SECONDS && normal_display)
+		if (TIME.changed & T_SECONDS && normal_display)
 			set_normal_mode();		// only if not setting
-		tod_time.changed = T_NONE;
+		TIME.changed = T_NONE;
 		display_next_digit();
 		counter++;
 		if (counter >= 250) {
-			// display_update_dot();	// doesn't look good
-			// display_flip_b5();		// debugging
 			counter = 0;
 		}
 		while (!tick_check())
