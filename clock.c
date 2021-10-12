@@ -33,6 +33,9 @@ static void switchaction()
 		TIME.minutes++;
 		if (TIME.minutes >= 60)
 			TIME.minutes = 0;
+#ifdef	DS3231
+		rtc_update(T_MINUTES);
+#endif
 		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
 		break;
@@ -44,6 +47,9 @@ static void switchaction()
 		TIME.hours++;
 		if (TIME.hours >= 24)
 			TIME.hours = 0;
+#ifdef	DS3231
+		rtc_update(T_HOURS);
+#endif
 		setactive = SETTIMEOUT - SETMARGIN - 1;
 		display_update();
 		break;
@@ -115,6 +121,9 @@ int main(void)
 
 	setactive = 0;					// not in set mode
 	uint8_t counter = 0;
+#ifdef	DS3231
+	rtc_getnow();
+#endif
 	display_update();
 	for (;;) {
 		if (setactive > 0)			// decrease set timeout
