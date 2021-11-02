@@ -56,8 +56,10 @@ void display_set_ptr(enum display_mode mode)
 
 void display_init(void)
 {
+#ifndef	DS3231
 	GPIO_DeInit(GPIOB);
 	GPIO_Init(GPIOB, GPIO_PIN_5, GPIO_MODE_OUT_PP_HIGH_SLOW);        // LED
+#endif
 	// segment pins
 	for (uint8_t i = 0; i < NSEGMENTS; i++) {
 		GPIO_Init(segments[i].port, segments[i].pin, GPIO_MODE_OUT_PP_LOW_SLOW);
@@ -72,10 +74,12 @@ void display_init(void)
 	display_set_ptr(D_HOURS);
 }
 
+#ifndef	DS3231
 void display_flip_b5(void)
 {
 	GPIO_WriteReverse(GPIOB, GPIO_PIN_5);
 }
+#endif
 
 static void digits_update(uint8_t *buffer, uint8_t value)
 {

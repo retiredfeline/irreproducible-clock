@@ -138,10 +138,11 @@ int main(void)
 		TIME.changed = T_NONE;
 		display_next_digit();
 		counter++;
-		if (counter >= 100) {
+		if (counter >= 125) {
 			counter = 0;
 #ifdef	DS3231
 			rtc_getnow();
+			display_update();
 #endif
 		}
 		while (!tick_check())
