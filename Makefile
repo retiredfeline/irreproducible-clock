@@ -25,7 +25,7 @@ iclock.ihx:	clock.rel mcu.rel tick.rel display.rel button.rel $(TIMEBASE_OBJ)
 tod.rel:	tod.c tod.h Makefile
 	$(CC) -c $(CFLAGS) -DDDS_ADJ=$(DDS_ADJ) $(INCLUDES) $< -o $(<:.c=.rel)
 
-rtcsoft.rel:	rtcsoft.c
+rtcsoft.rel:	rtcsoft.c rtc.h
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $(<:.c=.rel)
 
 %.rel:		%.c %.h
