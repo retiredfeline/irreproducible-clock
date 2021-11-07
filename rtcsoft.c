@@ -202,8 +202,8 @@ static void unpack_time(void)
 void rtc_getnow(void)
 {
 	i2cstart();
-        i2csendaddr();
-        i2csend(0);
+	i2csendaddr();
+	i2csend(0);
 	i2crestart();
 	i2creadaddr();
 	uint8_t *p = now;
@@ -213,7 +213,7 @@ void rtc_getnow(void)
 	}
 	*p++ = i2cread();
 	i2cnak();
-        i2cstop();
+	i2cstop();
 	unpack_time();
 }
 
