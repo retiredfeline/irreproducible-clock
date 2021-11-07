@@ -14,6 +14,9 @@ struct rtc_time rtc_time;
 
 void rtc_init(void)
 {
+	rtc_time.hours = 12;
+	rtc_time.minutes = 34;
+	rtc_time.seconds = 56;
 	I2C_DeInit();
 	// Set up for 100kHz, own address irrelevant, DutyCycle irrelevant,
 	// Ack curr, 7 bit addresses, 16 MHz
@@ -24,89 +27,103 @@ void rtc_init(void)
 
 static uint8_t bcd2bin(uint8_t c)
 {
-        return (((c >> 4) & 0xF) * 10) + (c & 0xF);
+	return c - 6 * (c >> 4);
 }
 
 static void unpack_time(void)
 {
 	rtc_time.changed = T_NONE;
-	uint8_t hours = bcd2bin(now[2]);
+	uint8_t hours = bcd2bin(now[HOURS_POS] & 0x3f);
+	if (hours >= 24)
+		hours = 24;		// flag problem
 	if (hours != rtc_time.hours) {
 		rtc_time.hours = hours;
 		rtc_time.changed |= T_HOURS;
 	}
-	uint8_t minutes = bcd2bin(now[1]);
+	uint8_t minutes = bcd2bin(now[MINUTES_POS]);
+	if (minutes >= 60)
+		minutes = 60;		// flag problem
 	if (minutes != rtc_time.minutes) {
 		rtc_time.minutes = minutes;
-		rtc_time.changed != T_MINUTES;
+		rtc_time.changed |= T_MINUTES;
 	}
-	uint8_t seconds = bcd2bin(now[0]);
+	uint8_t seconds = bcd2bin(now[SECONDS_POS]);
+	if (seconds >= 60)
+		seconds = 60;		// flag problem
 	if (seconds != rtc_time.seconds) {
 		rtc_time.seconds = seconds;
-		rtc_time.changed != T_SECONDS;
+		rtc_time.changed |= T_SECONDS;
 	}
 }
 
 void rtc_getnow(void)
 {
-	// send data of 0
-        I2C_GenerateSTART(ENABLE);
+	// send pointer of 0
+	I2C_GenerateSTART(ENABLE);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT))
 		;
-        I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_TX);
+	I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_TX);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
 		;
-        I2C_SendData(0);
+	I2C_SendData(0);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED))
 		;
-        I2C_GenerateSTOP(ENABLE);
 
-	// read 7 bytes
-	while (I2C_GetFlagStatus(I2C_FLAG_BUSBUSY))
-		;
-        I2C_GenerateSTART(ENABLE);
+	I2C_GenerateSTART(ENABLE);			// generates a restart
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT))
 		;
-        I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_RX);
+	I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_RX);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED))
 		;
-	uint8_t *p = now;
-        for (int8_t i = 7; i >= 0; ) {
-		if (I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_RECEIVED)) {
-			if (i == 0) {
-				I2C_AcknowledgeConfig(I2C_ACK_NONE);
-				I2C_GenerateSTOP(ENABLE);
-			}
-			*p++ = I2C_ReceiveData();
-			i--;
-		}
-        }
+	// read sizeof(now) (7) bytes
+	I2C_AcknowledgeConfig(I2C_ACK_CURR);		// ACK
+	int i = 0;
+	while (i < sizeof(now) - 3) {
+		while (!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_RECEIVED))
+			;
+		now[i] = I2C_ReceiveData();
+		i++;
+	}
+	// third last byte
+	// wait for BTF
+	while (I2C_GetFlagStatus(I2C_FLAG_TRANSFERFINISHED) == RESET)
+		;
+	I2C_AcknowledgeConfig(I2C_ACK_NONE);		// NAK
+	now[i] = I2C_ReceiveData();			// N-2
+	i++;
+	// second last byte
+	I2C_GenerateSTOP(ENABLE);
+	now[i] = I2C_ReceiveData();			// N-1
+	i++;
+	// last byte
+	// wait for RXNE
+	while (I2C_GetFlagStatus(I2C_FLAG_RXNOTEMPTY) == RESET)
+		;
+	now[i] = I2C_ReceiveData();			// N
 	unpack_time();
 }
 
 static void update_element(uint8_t value, uint8_t reg)
 {
 	// send data of register then value
-        I2C_GenerateSTART(ENABLE);
+	I2C_GenerateSTART(ENABLE);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_MODE_SELECT))
 		;
-        I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_TX);
+	I2C_Send7bitAddress(DS3231ADDR << 1, I2C_DIRECTION_TX);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
 		;
-        I2C_SendData(reg);
+	I2C_SendData(reg);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED))
 		;
-        I2C_SendData(value);
+	I2C_SendData(value);
 	while (!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_TRANSMITTED))
 		;
-        I2C_GenerateSTOP(ENABLE);
+	I2C_GenerateSTOP(ENABLE);
 }
 
 static uint8_t bin2bcd(uint8_t c)
 {
-	uint8_t hinyb = c / 10;
-	uint8_t lonyb = c % 10;
-	return (hinyb << 4 | lonyb);
+	return c + 6 * (c / 10);
 }
 
 void rtc_update(enum time_changes changed)
