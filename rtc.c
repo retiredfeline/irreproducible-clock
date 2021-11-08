@@ -77,7 +77,7 @@ void rtc_getnow(void)
 		;
 	// read sizeof(now) (7) bytes
 	I2C_AcknowledgeConfig(I2C_ACK_CURR);		// ACK
-	int i = 0;
+	uint8_t i = 0;
 	while (i < sizeof(now) - 3) {
 		while (!I2C_CheckEvent(I2C_EVENT_MASTER_BYTE_RECEIVED))
 			;
