@@ -5,7 +5,7 @@
 
 #include "tick.h"
 
-static uint8_t tim4_overflow;
+static uint8_t volatile tim4_overflow;
 
 void tim4_isr(void) __interrupt(ITC_IRQ_TIM4_OVF)
 {
