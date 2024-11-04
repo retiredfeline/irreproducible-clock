@@ -94,11 +94,18 @@ void display_update(void)
 {
 	digits_update(hours_buffer, TIME.hours);
 	digits_update(mins_buffer, TIME.minutes);
-}
-
-void display_update_dot(void)
-{
-	display_ptr[DP_COLON_POS] ^= 0x80;	// flip dot
+	switch (mode) {
+	case NORMAL_MODE:
+		hours_buffer[DP_COLON_POS] &= 0x7f;
+		mins_buffer[DP_COLON_POS] &= 0x7f;
+		break;
+	case TIME_HOURS:
+		hours_buffer[DP_COLON_POS] |= 0x80;
+		break;
+	case TIME_MINS:
+		mins_buffer[DP_COLON_POS] |= 0x80;
+		break;
+	}
 }
 
 static void display_segments(uint8_t value)

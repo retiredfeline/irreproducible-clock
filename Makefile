@@ -18,7 +18,7 @@ else
 TIMEBASE_OBJ=tod.rel
 endif
 
-iclock.ihx:	clock.rel mcu.rel tick.rel display.rel button.rel $(TIMEBASE_OBJ)
+iclock.hex:	clock.rel mcu.rel tick.rel display.rel button.rel $(TIMEBASE_OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 # Remake tod.rel if DDS_ADJ changed in Makefile
@@ -31,8 +31,8 @@ rtcsoft.rel:	rtcsoft.c rtc.h
 %.rel:		%.c %.h
 	$(CC) -c $(CFLAGS) $(INCLUDES) $< -o $(<:.c=.rel)
 
-%.flash:	%.ihx
-	stm8flash -cstlinkv2 -pstm8s103f3 -w$(<:.flash=.ihx)
+%.flash:	%.hex
+	stm8flash -cstlinkv2 -pstm8s103f3 -w$(<:.flash=.hex)
 
 flash:	iclock.flash
 

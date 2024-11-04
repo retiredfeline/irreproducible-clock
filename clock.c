@@ -13,10 +13,11 @@
 #define	DEPMIN		(100u / MSPERTICK)	// debounce period
 #define	RPTTHRESH	(400u / MSPERTICK)	// repeat threshold after debounce
 #define	RPTPERIOD	(250u / MSPERTICK)	// repeat period
+#define	BUTTON_TIMEOUT	64u			// revert to NORMAL_MODE if no button press
 
-static uint8_t swstate, swtent, swmin, swrepeat, normal_display;
+enum set_mode mode;
+static uint8_t swstate, swtent, swmin, swrepeat, button_timeout;
 static struct pt pt;
-static uint16_t setactive;			// ticks, > 0 in setting mode
 
 #define	SETTIMEOUT	(8*500)			// 8 seconds to set
 #define	SETMARGIN	(500/2)			// 0.5 seconds to blank
@@ -24,46 +25,48 @@ static uint16_t setactive;			// ticks, > 0 in setting mode
 static void switchaction()
 {
 	switch (swstate & B_BOTH) {
-	case B_MINS:
-		if (setactive <= 0)
+	case B_0:
+		mode++;
+		switch (mode) {
+		case TIME_HOURS:
+			display_set_ptr(D_HOURS);
 			break;
-		normal_display = 0;		// suspend while setting
-		display_set_ptr(D_MINS);
-		TIME.seconds = 0;
-		TIME.minutes++;
-		if (TIME.minutes >= 60)
-			TIME.minutes = 0;
-#ifdef	DS3231
-		rtc_update(T_MINUTES);
-#endif
-		setactive = SETTIMEOUT - SETMARGIN - 1;
-		display_update();
-		break;
-	case B_HOURS:
-		if (setactive <= 0)
+		case TIME_MINS:
+			display_set_ptr(D_MINS);
 			break;
-		normal_display = 0;		// suspend while setting
-		display_set_ptr(D_HOURS);
-		TIME.hours++;
-		if (TIME.hours >= 24)
-			TIME.hours = 0;
-#ifdef	DS3231
-		rtc_update(T_HOURS);
-#endif
-		setactive = SETTIMEOUT - SETMARGIN - 1;
-		display_update();
+		default:
+			mode = NORMAL_MODE;
+		}
 		break;
-	case B_BOTH:
-		setactive = SETTIMEOUT;
-		display_set_visibility(0);
+	case B_1:
+		switch (mode) {
+		case NORMAL_MODE:
+			break;
+		case TIME_HOURS:
+			TIME.hours++;
+			if (TIME.hours >= 24)
+				TIME.hours = 0;
+#ifdef	DS3231
+			rtc_update(T_HOURS);
+#endif
+			break;
+		case TIME_MINS:
+			TIME.seconds = 0;
+			TIME.minutes++;
+			if (TIME.minutes >= 60)
+				TIME.minutes = 0;
+#ifdef	DS3231
+			rtc_update(T_MINUTES);
+#endif
+			break;
+		}
+		display_update();
 		break;
 	}
-}
-
-static void set_normal_mode(void)
-{
-	// 3 seconds displaying minutes, then 2 seconds displaying hours
-	display_set_ptr((TIME.seconds % 5 < 3) ? D_MINS : D_HOURS);
+	if (mode == NORMAL_MODE)
+		button_timeout = 0;
+	else
+		button_timeout = BUTTON_TIMEOUT;
 }
 
 static inline void reinitstate()
@@ -71,8 +74,6 @@ static inline void reinitstate()
 	swmin = DEPMIN;
 	swrepeat = RPTTHRESH;
 	swtent = swstate = B_NONE;
-	normal_display = 1;
-	set_normal_mode();
 }
 
 static
@@ -119,22 +120,20 @@ int main(void)
 	button_init();
 	mcu_enable_interrupts();
 
-	setactive = 0;					// not in set mode
 	uint8_t counter = 0;
 #ifdef	DS3231
 	rtc_getnow();
 #endif
-	display_update();
+	mode = NORMAL_MODE;
+	button_timeout = 0;
 	for (;;) {
-		if (setactive > 0)			// decrease set timeout
-			setactive--;
-		display_set_visibility(setactive == 0 ||
-			(setactive >= SETMARGIN &&
-			setactive < SETTIMEOUT - SETMARGIN));
-		if (TIME.changed & (T_HOURS | T_MINUTES))
+		if (TIME.changed & (T_HOURS | T_MINUTES | T_SECONDS)) {
 			display_update();
-		if (TIME.changed & T_SECONDS && normal_display)
-			set_normal_mode();		// only if not setting
+			if (button_timeout == 0)	// if no activity, revert to NORMAL_MODE
+				mode = NORMAL_MODE;
+			else
+				button_timeout--;
+		}
 		TIME.changed = T_NONE;
 		display_next_digit();
 		counter++;
@@ -152,5 +151,9 @@ int main(void)
 				;
 		swstate = button_state();
 		PT_SCHEDULE(switchhandler(&pt));
+		if (mode == NORMAL_MODE) {
+			// 3 seconds displaying minutes, then 2 seconds displaying hours
+			display_set_ptr((TIME.seconds % 5 < 3) ? D_MINS : D_HOURS);
+		}
 	}
 }

@@ -1,6 +1,6 @@
 *.asm
 *.hlr
-*.ihx
+*.hex
 *.lib
 *.lk
 *.lst
